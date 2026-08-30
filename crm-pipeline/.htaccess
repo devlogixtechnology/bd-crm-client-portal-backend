@@ -1,0 +1,11 @@
+RewriteEngine On
+RewriteBase /crm-pipeline/
+
+# POST /crm-pipeline/leads
+RewriteRule ^leads/?$ api/leads.php [L,QSA]
+
+# GET /crm-pipeline/leads
+RewriteRule ^leads/?$ api/leads.php [L,QSA]
+
+# PUT /crm-pipeline/leads/{id}/stage
+RewriteRule ^leads/([0-9]+)/stage/?$ api/lead_stage.php?id=$1 [L,QSA]

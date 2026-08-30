@@ -1,0 +1,21 @@
+{
+  "success": true,
+  "message": "Leads fetched and grouped by pipeline stage.",
+  "data": {
+    "new": [
+      {
+        "id": 1,
+        "name": "Ali Raza",
+        "email": "ali@example.com",
+        "company": "Tech Solutions",
+        "stage": "new",
+        "value": "25000.00"
+      }
+    ],
+    "contacted": [],
+    "qualified": [],
+    "proposal": [],
+    "won": [],
+    "lost": []
+  }
+}

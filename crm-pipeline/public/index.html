@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CRM Pipeline API Demo</title>
+<style>
+body{font-family:Arial,sans-serif;background:#f4f6f8;margin:0;padding:30px;color:#222}
+.container{max-width:1000px;margin:auto}.card{background:#fff;border-radius:12px;padding:22px;margin-bottom:20px;box-shadow:0 3px 12px #0001}
+button{padding:10px 16px;border:0;border-radius:8px;background:#222;color:#fff;cursor:pointer;margin-right:8px}
+pre{background:#111;color:#eee;padding:18px;border-radius:10px;overflow:auto;min-height:120px}
+input,select{padding:10px;margin:5px;width:calc(50% - 20px);box-sizing:border-box}
+h1{margin-top:0}.stage{display:inline-block;background:#eee;padding:7px 10px;border-radius:20px;margin:4px}
+</style>
+</head>
+<body>
+<div class="container">
+<div class="card">
+<h1>CRM Pipeline API Demo</h1>
+<p>Test the three required endpoints from the task.</p>
+<button onclick="getLeads()">GET /leads</button>
+</div>
+
+<div class="card">
+<h2>POST /leads</h2>
+<input id="name" placeholder="Name" value="Demo Client">
+<input id="email" placeholder="Email" value="demo@example.com">
+<input id="company" placeholder="Company" value="Demo Company">
+<input id="value" type="number" placeholder="Value" value="50000">
+<select id="stage"><option>new</option><option>contacted</option><option>qualified</option><option>proposal</option><option>won</option><option>lost</option></select>
+<br><button onclick="createLead()">Create Lead</button>
+</div>
+
+<div class="card">
+<h2>PUT /leads/{id}/stage</h2>
+<input id="leadId" type="number" placeholder="Lead ID" value="1">
+<select id="newStage"><option>new</option><option>contacted</option><option>qualified</option><option>proposal</option><option>won</option><option>lost</option></select>
+<button onclick="updateStage()">Update Stage</button>
+</div>
+
+<div class="card"><h2>API Output</h2><pre id="output">Click a button to see JSON output.</pre></div>
+</div>
+<script>
+const out = data => document.getElementById('output').textContent = JSON.stringify(data,null,2);
+async function getLeads(){
+ try {
+   const r=await fetch('../leads');
+   const data=await r.json();
+   out(data);
+ } catch (error) {
+   out({success:false,message:'Could not load leads.',error:error.message});
+ }
+}
+async function createLead(){
+ const body={
+   name: document.getElementById('name').value.trim(),
+   email: document.getElementById('email').value.trim(),
+   company: document.getElementById('company').value.trim(),
+   value: Number(document.getElementById('value').value || 0),
+   stage: document.getElementById('stage').value
+ };
+ if (!body.name || !body.email) {
+   out({success:false,message:'Please enter both Name and Email.',data:null});
+   return;
+ }
+ try {
+   const r=await fetch('../leads',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+   const data=await r.json();
+   out(data);
+   if (data.success) await getLeads();
+ } catch (error) {
+   out({success:false,message:'Request failed. Check Apache/PHP and browser console.',error:error.message});
+ }
+}
+async function updateStage(){
+ const id = document.getElementById('leadId').value;
+ const stage = document.getElementById('newStage').value;
+ try {
+   const r=await fetch('../leads/'+encodeURIComponent(id)+'/stage',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({stage})});
+   const data=await r.json();
+   out(data);
+   if (data.success) await getLeads();
+ } catch (error) {
+   out({success:false,message:'Request failed. Check Apache/PHP and browser console.',error:error.message});
+ }
+}
+</script>
+</body>
+</html>
