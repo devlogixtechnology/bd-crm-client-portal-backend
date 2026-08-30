@@ -1,3 +1,4 @@
+```php
 <?php
 /**
  * Lightweight JWT Helper (HS256)
@@ -7,9 +8,23 @@
 
 class JWTHelper
 {
-    // IMPORTANT: move this to an environment variable in production
-    private static string $secret = '7f3A9dQx!2mR8kLpZ6vB1nC4tYs5eWj0uHg7Ff2Kd9Xa3Nm6Rq';
+    // JWT secret is loaded from environment variable
+    private static string $secret = '';
+
     private static int $expirySeconds = 3600; // 1 hour
+
+    private static function getSecret(): string
+    {
+        if (self::$secret === '') {
+            self::$secret = getenv('JWT_SECRET') ?: '';
+        }
+
+        if (self::$secret === '') {
+            throw new RuntimeException('JWT_SECRET is not configured.');
+        }
+
+        return self::$secret;
+    }
 
     private static function base64UrlEncode(string $data): string
     {
@@ -19,15 +34,16 @@ class JWTHelper
     private static function base64UrlDecode(string $data): string
     {
         $remainder = strlen($data) % 4;
+
         if ($remainder) {
             $data .= str_repeat('=', 4 - $remainder);
         }
+
         return base64_decode(strtr($data, '-_', '+/'));
     }
 
     /**
      * Generate a JWT for a given user payload.
-     * @param array $payload e.g. ['user_id' => 1, 'role' => 'internal_bd']
      */
     public static function generateToken(array $payload): string
     {
@@ -45,9 +61,10 @@ class JWTHelper
         $signature = hash_hmac(
             'sha256',
             "{$headerEncoded}.{$payloadEncoded}",
-            self::$secret,
+            self::getSecret(),
             true
         );
+
         $signatureEncoded = self::base64UrlEncode($signature);
 
         return "{$headerEncoded}.{$payloadEncoded}.{$signatureEncoded}";
@@ -60,6 +77,7 @@ class JWTHelper
     public static function verifyToken(string $token)
     {
         $parts = explode('.', $token);
+
         if (count($parts) !== 3) {
             return false;
         }
@@ -69,21 +87,26 @@ class JWTHelper
         $expectedSignature = hash_hmac(
             'sha256',
             "{$headerEncoded}.{$payloadEncoded}",
-            self::$secret,
+            self::getSecret(),
             true
         );
+
         $expectedSignatureEncoded = self::base64UrlEncode($expectedSignature);
 
         if (!hash_equals($expectedSignatureEncoded, $signatureEncoded)) {
-            return false; // invalid signature
+            return false;
         }
 
-        $payload = json_decode(self::base64UrlDecode($payloadEncoded), true);
+        $payload = json_decode(
+            self::base64UrlDecode($payloadEncoded),
+            true
+        );
 
         if (!$payload || !isset($payload['exp']) || $payload['exp'] < time()) {
-            return false; // expired or malformed
+            return false;
         }
 
         return $payload;
     }
 }
+```
